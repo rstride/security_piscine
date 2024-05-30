@@ -1,9 +1,20 @@
 # <p align="center">Arachnida</p>
-The spider program allow you to extract all the images from a website, recursively, by
-providing a url as a parameter.
 
-The scorpion program receive image files as parameters and must be able to
-parse them for EXIF and other metadata, displaying them on the screen.
+> *An introductory project to web scraping and metadata manipulation.*
+
+## Project Description
+Arachnida is a cybersecurity project aimed at developing skills in web scraping and metadata analysis. The project involves two main tasks:
+1. **Spider**: A program to automatically extract and download images from a specified website.
+2. **Scorpion**: A program to analyze the metadata of the downloaded images.
+
+### Features
+- **Spider**:
+  - Recursively download images from a given URL.
+  - Specify recursion depth and download path.
+  - Supports .jpg, .jpeg, .png, .gif, and .bmp image formats.
+- **Scorpion**:
+  - Parse and display EXIF metadata from image files.
+  - Supports the same image formats as the Spider program.
 
 ## Install
 ```bash
