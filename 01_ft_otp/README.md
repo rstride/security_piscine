@@ -1,11 +1,20 @@
-# <p align="center">ft_otp</p>
-> *Projet d'introduction à la notion de mot de passe à usage unique (OTP) utilisant le RFC HOTP.*
->
-> *Les mots de passe sont l'un des plus gros casse-tête de la sécurité informatique. Les utilisateurs les oublient, les partagent, les réutilisent et en choisissent de très mauvais. De plus, les mots de passe finissent tôt ou tard par être divulgués lors de failles de sécurité.
->
-> Une façon d'éviter cela est d'utiliser des mots de passe à usage unique, basés sur des horodatages, qui expirent après quelques minutes et deviennent alors invalides. Que vous utilisiez déjà ce système ou que vous n'en ayez jamais entendu parler, il est fort probable qu'un de vos mots de passe ait déjà été compromis à un moment de votre vie.*
->
-> *Ce projet vise à implémenter un système de mot de passe à usage unique basé sur le temps (TOTP). Ce système sera capable de générer des mots de passe temporaires et uniques à partir d'une clé principale. Il sera basé sur la [RFC-6238](https://datatracker.ietf.org/doc/html/rfc6238), ce qui vous permettra de l'utiliser au quotidien.*
+# <p align="center">Arachnida</p>
+
+> *An introductory project to web scraping and metadata manipulation.*
+
+## Project Description
+Arachnida is a cybersecurity project aimed at developing skills in web scraping and metadata analysis. The project involves two main tasks:
+1. **Spider**: A program to automatically extract and download images from a specified website.
+2. **Scorpion**: A program to analyze the metadata of the downloaded images.
+
+### Features
+- **Spider**:
+  - Recursively download images from a given URL.
+  - Specify recursion depth and download path.
+  - Supports .jpg, .jpeg, .png, .gif, and .bmp image formats.
+- **Scorpion**:
+  - Parse and display EXIF metadata from image files.
+  - Supports the same image formats as the Spider program.
 
 ## Install
 ```bash
