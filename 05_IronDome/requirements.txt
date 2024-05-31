@@ -1,0 +1,3 @@
+daemon
+pyinotify
+scipy
