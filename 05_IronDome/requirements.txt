@@ -1,4 +1,0 @@
-daemon
-pyinotify
-scipy
-psutil
