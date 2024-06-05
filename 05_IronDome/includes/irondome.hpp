@@ -10,3 +10,4 @@
 #include <cerrno>
 #include <vector>
 
+const std::string LOG_FILE = "/var/log/irondome.log";
