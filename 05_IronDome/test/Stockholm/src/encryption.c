@@ -36,7 +36,7 @@ void encrypt_file(const char *filename, const unsigned char *key, const unsigned
 
     EVP_CIPHER_CTX_free(ctx);
     fclose(in_file);
-    fclose(out_file);
+    fclose(out_file);z
 
     rename("temp.enc", filename);
 }

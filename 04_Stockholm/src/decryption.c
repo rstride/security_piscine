@@ -27,7 +27,8 @@ int decrypt(crypto_params *params) {
 void decrypt_files(const char *key_hex) {
     crypto_params params;
     params.key = (unsigned char *)malloc(KEY_SIZE);
-    params.iv = (unsigned char *)malloc(IV_SIZE);
+    unsigned char iv[IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
+    memcpy(params.iv, iv, IV_SIZE);
     params.input = (unsigned char *)malloc(1024);
     params.output = (unsigned char *)malloc(1024);
     params.input_len = 0;
@@ -68,7 +69,7 @@ void decrypt_files(const char *key_hex) {
                         } else {
                             filename = filepath;
                         }
-                        char new_filepath[512];
+                        char new_filepath[768];
                         snprintf(new_filepath, sizeof(new_filepath), "%s/%s", path, filename);
                         FILE *new_file = fopen(new_filepath, "wb");
                         if (new_file) {

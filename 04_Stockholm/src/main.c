@@ -54,6 +54,6 @@ int main(int argc, char *argv[]) {
         }
         encrypt_files();
     }
-
+    printf("Done!\n");
     return 0;
 }

