@@ -82,7 +82,9 @@ void encrypt_files(int silent_mode){
                     fread(plaintext, 1, file_len, file);
                     fclose(file);
 
+                    params.input = plaintext;
                     params.input_len = file_len;
+                    params.output = malloc(file_len + 32);
 
                     // Encrypt the file
                     stockholm_encrypt(&params);

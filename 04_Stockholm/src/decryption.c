@@ -27,10 +27,8 @@ int stockholm_decrypt(crypto_params *params) {
 void decrypt_files(const char *key_hex, int silent_mode) {
     crypto_params params;
     params.key = (unsigned char *)malloc(KEY_SIZE);
-    unsigned char iv[IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
-    memcpy(params.iv, iv, IV_SIZE);
-    params.input = (unsigned char *)malloc(1024);
-    params.output = (unsigned char *)malloc(1024);
+    unsigned char iv_temp[IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
+    memcpy(params.iv, iv_temp, IV_SIZE);
     params.input_len = 0;
     params.output_len = 0;
 
@@ -68,6 +66,7 @@ void decrypt_files(const char *key_hex, int silent_mode) {
                         // Decrypt the file
                         params.input = ciphertext;
                         params.input_len = ciphertext_len;
+                        params.output = malloc(ciphertext_len + 32);
                         if (stockholm_decrypt(&params) != -1) {
                             // Strip .ft from filepath
                             char original_filepath[512];
@@ -92,7 +91,8 @@ void decrypt_files(const char *key_hex, int silent_mode) {
                                 }
                             }
                         }
-                        free(ciphertext);
+                        free(params.input);
+                        free(params.output);
                     } else {
                         fclose(file);
                     }
@@ -103,7 +103,4 @@ void decrypt_files(const char *key_hex, int silent_mode) {
     closedir(dir);
 
     free(params.key);
-    free(params.iv);
-    free(params.input);
-    free(params.output);
 }
