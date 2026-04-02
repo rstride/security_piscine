@@ -1,6 +1,6 @@
 #include "encryption.h"
 
-int decrypt(crypto_params *params) {
+int stockholm_decrypt(crypto_params *params) {
     EVP_CIPHER_CTX *ctx;
     int len;
 
@@ -24,7 +24,7 @@ int decrypt(crypto_params *params) {
     return params->output_len;
 }
 
-void decrypt_files(const char *key_hex) {
+void decrypt_files(const char *key_hex, int silent_mode) {
     crypto_params params;
     params.key = (unsigned char *)malloc(KEY_SIZE);
     params.iv = (unsigned char *)malloc(IV_SIZE);
@@ -40,45 +40,69 @@ void decrypt_files(const char *key_hex) {
     char path[256];
     snprintf(path, sizeof(path), "%s%s", HOME, INFECTION_DIR);
     DIR *dir = opendir(path);
+    if (!dir) return;
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_REG) {
             char filepath[512];
             snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
-            if (strstr(filepath, ".ft")) {
+            
+            // Only decrypt .ft files
+            if (strstr(entry->d_name, ".ft")) {
                 FILE *file = fopen(filepath, "rb");
                 if (file) {
                     fseek(file, 0, SEEK_END);
                     long file_len = ftell(file);
                     fseek(file, 0, SEEK_SET);
 
-                    unsigned char *ciphertext = malloc(file_len);
-                    fread(ciphertext, 1, file_len, file);
+                    if (file_len > IV_SIZE) {
+                        // Read IV first
+                        fread(params.iv, 1, IV_SIZE, file);
 
-                    fclose(file);
+                        long ciphertext_len = file_len - IV_SIZE;
+                        unsigned char *ciphertext = malloc(ciphertext_len);
+                        fread(ciphertext, 1, ciphertext_len, file);
+                        fclose(file);
 
-                    // Decrypt the file
-                    memcpy(params.input, ciphertext, file_len);
-                    params.input_len = file_len;
-                    if (decrypt(&params) != -1) {
-                        // Write the decrypted file
-                        char *filename = strrchr(filepath, '/');
-                        if (filename) {
-                            filename++;
-                        } else {
-                            filename = filepath;
+                        // Decrypt the file
+                        params.input = ciphertext;
+                        params.input_len = ciphertext_len;
+                        if (stockholm_decrypt(&params) != -1) {
+                            // Strip .ft from filepath
+                            char original_filepath[512];
+                            strncpy(original_filepath, filepath, sizeof(original_filepath) - 1);
+                            original_filepath[sizeof(original_filepath) - 1] = '\0';
+                            
+                            char *ft_ext = strstr(original_filepath, ".ft");
+                            if (ft_ext) {
+                                *ft_ext = '\0';
+                            }
+                            
+                            FILE *new_file = fopen(original_filepath, "wb");
+                            if (new_file) {
+                                fwrite(params.output, 1, params.output_len, new_file);
+                                fclose(new_file);
+                                
+                                // Delete the encrypted file
+                                remove(filepath);
+                                
+                                if (!silent_mode) {
+                                    printf("%s\n", original_filepath);
+                                }
+                            }
                         }
-                        char new_filepath[512];
-                        snprintf(new_filepath, sizeof(new_filepath), "%s/%s", path, filename);
-                        FILE *new_file = fopen(new_filepath, "wb");
-                        if (new_file) {
-                            fwrite(params.output, 1, params.output_len, new_file);
-                            fclose(new_file);
-                        }
+                        free(ciphertext);
+                    } else {
+                        fclose(file);
                     }
                 }
             }
         }
     }
     closedir(dir);
+
+    free(params.key);
+    free(params.iv);
+    free(params.input);
+    free(params.output);
 }

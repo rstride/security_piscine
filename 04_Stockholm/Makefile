@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-I./includes -Wall -Wextra -O2
-LDFLAGS=-lssl -lcrypto
+CFLAGS=-I./includes -I/opt/homebrew/opt/openssl@3/include -Wall -Wextra -O2
+LDFLAGS=-L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto
 
-SRC=src/main.c src/encryption.c src/decryption.c
+SRC=src/main.c src/encryption.c src/decryption.c src/utils.c
 OBJ=$(SRC:.c=.o)
 
 all: stockholm
