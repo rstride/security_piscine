@@ -56,6 +56,6 @@ int main(int argc, char *argv[]) {
         }
         encrypt_files(silent_mode);
     }
-
+    printf("Done!\n");
     return 0;
 }

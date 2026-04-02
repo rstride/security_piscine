@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -22,7 +23,7 @@ extern const int num_wannacry_extensions;
 
 typedef struct {
     unsigned char *key;         // Encryption key
-    unsigned char *iv;          // Initialization vector
+    unsigned char iv[16];          // Initialization vector
     unsigned char *input;       // Plaintext or Ciphertext
     unsigned char *output;      // Ciphertext or Plaintext (depending on operation)
     int input_len;              // Length of input data
