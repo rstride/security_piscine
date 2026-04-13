@@ -14,8 +14,11 @@ stockholm: $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) stockholm
+	rm -f $(OBJ)
 
-re: clean all
+fclean: clean
+	rm -f stockholm
 
-.PHONY: all clean re
+re: fclean all
+
+.PHONY: all clean fclean re

