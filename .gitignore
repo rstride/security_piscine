@@ -54,3 +54,8 @@ dkms.conf
 04_Stockholm/temp.dec
 *.DS_Store
 05_IronDome/test/Stockholm/.DS_Store
+
+# Rust / Cargo
+07_Vaccine/target/
+07_Vaccine/vaccine
+07_Vaccine/output.json
