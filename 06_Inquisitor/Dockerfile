@@ -1,15 +1,16 @@
-FROM debian:latest
+FROM debian:bookworm-slim
 
-RUN apt-get update && \
-    apt-get install -y build-essential && \
-    apt-get install -y nano && \
-    apt-get install -y gcc && \
-    apt-get install -y make \
-    apt-get install -y libcap-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpcap-dev \
+        iproute2 \
+        net-tools \
+        iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /app
 WORKDIR /app
 
-RUN make
+RUN make build
 
 CMD ["sleep", "infinity"]

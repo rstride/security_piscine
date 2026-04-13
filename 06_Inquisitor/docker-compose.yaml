@@ -1,8 +1,62 @@
-version: '3.7'
+version: '3.8'
+
+networks:
+  inquisitor_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+
 services:
+
+  # ── FTP server (pyftpdlib) ───────────────────────────────────────────────────
+  ftp-server:
+    image: python:3-slim
+    container_name: ftp-server
+    hostname: ftp-server
+    networks:
+      inquisitor_net:
+        ipv4_address: 172.20.0.10
+    volumes:
+      - ./test:/scripts:ro
+    command: >
+      sh -c "pip install pyftpdlib -q && python3 /scripts/ftp_server.py"
+    restart: unless-stopped
+
+  # ── FTP client ────────────────────────────────────────────────────────────────
+  ftp-client:
+    image: debian:bookworm-slim
+    container_name: ftp-client
+    hostname: ftp-client
+    networks:
+      inquisitor_net:
+        ipv4_address: 172.20.0.20
+    command: >
+      sh -c "apt-get update -qq &&
+             apt-get install -y -qq --no-install-recommends ftp net-tools iputils-ping &&
+             sleep infinity"
+    depends_on:
+      - ftp-server
+    restart: unless-stopped
+
+  # ── Inquisitor (attacker) ─────────────────────────────────────────────────────
   inquisitor:
-    image: inquisitor
     build:
       context: .
       dockerfile: Dockerfile
-    
+    container_name: inquisitor
+    hostname: inquisitor
+    networks:
+      inquisitor_net:
+        ipv4_address: 172.20.0.30
+    # Raw socket access and ARP manipulation require these capabilities
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    privileged: true
+    command: sleep infinity
+    depends_on:
+      - ftp-server
+      - ftp-client
+    restart: unless-stopped

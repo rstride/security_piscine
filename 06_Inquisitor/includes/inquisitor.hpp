@@ -1,13 +1,28 @@
 #pragma once
 
-#include <pcap.h>
-#include <csignal>
+// C++ standard library
 #include <iostream>
-#include <cstdlib>
+#include <string>
+#include <vector>
+#include <thread>
+#include <fstream>
+#include <csignal>
 #include <cstring>
-#include <unistd.h>
+#include <cstdlib>
+#include <cstdio>
 
-void handleSignal(int sig);
-void startArpPoisoning(const char *ipSrc, const char *macSrc, const char *ipTarget, const char *macTarget);
-void stopArpPoisoning();
-void packetHandler(u_char *userData, const struct pcap_pkthdr *pkthdr, const u_char *packet);
+// POSIX / system
+#include <unistd.h>
+#include <ifaddrs.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+// Linux raw socket / ARP
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+
+// libpcap
+#include <pcap.h>
