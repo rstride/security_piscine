@@ -52,3 +52,5 @@ Mkfile.old
 dkms.conf
 04_Stockholm/stockholm
 04_Stockholm/temp.dec
+*.DS_Store
+05_IronDome/test/Stockholm/.DS_Store
