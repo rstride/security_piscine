@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <unordered_set>
 
 // POSIX / system
 #include <unistd.h>

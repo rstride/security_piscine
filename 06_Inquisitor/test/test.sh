@@ -93,13 +93,23 @@ header "=== Starting attack ==="
 LOGFILE="/tmp/inquisitor_test.log"
 
 docker exec inquisitor sh -c \
-    "nohup ./build/inquisitor ${VERBOSE_FLAG} \
+    "./build/inquisitor ${VERBOSE_FLAG} \
         $CLIENT_IP $CLIENT_MAC \
         $SERVER_IP $SERVER_MAC \
      > $LOGFILE 2>&1 &"
 
 info "Inquisitor started (log: $LOGFILE inside container)"
-sleep 3
+info "Waiting for ARP poisoning to start..."
+for i in $(seq 1 10); do
+    if docker exec inquisitor grep -q 'Sniffing' "$LOGFILE" 2>/dev/null; then
+        success "Inquisitor is sniffing — ARP poisoning active"
+        break
+    fi
+    sleep 1
+    if [[ "$i" -eq 10 ]]; then
+        warn "Inquisitor did not start sniffing — check log"
+    fi
+done
 
 # ─── Run FTP test session ─────────────────────────────────────────────────────
 header "=== Running FTP session from ftp-client ==="

